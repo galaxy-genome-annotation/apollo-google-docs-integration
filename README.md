@@ -8,6 +8,9 @@ tied to a specific revision of annotation during publication.
 
 This is very much WIP and an experiment.
 
+
+![](./media/screenshot.png)
+
 ## LICENSE
 
 AGPL-3.0
