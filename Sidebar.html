@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.js"></script>
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+     <?!= include("Stylesheet"); ?>
+  </head>
+  <body>
+    <div class="container">
+      <form>
+        <div class="block col-contain">
+            <b>Organism</b>
+            <div>
+                <select id="org-select">
+                <? for (var i = 0; i < organismList.length; i++) { ?>
+                <option value="<?= organismList[i].orgId ?>"><?= organismList[i].name ?></option>
+                <? } ?>
+                </select>
+            </div>
+        </div>
+        
+       <div class="block" id="button-bar">
+          <button class="blue" id="load-organism">Load Organism's Features</button>
+        </div>
+      </form>
+    </div>
+    
+    <div id="feat-parent" class="container hidden">
+      <form>
+        <div class="block col-contain">
+            <b>Features</b>
+            <div id="feat-container">
+                <select id="feat-select" style="max-width: 100%">
+                </select>
+            </div>
+        </div>
+         
+       <div class="block" id="button-bar">
+          <button class="blue" id="insert-reference">Insert Reference</button>
+        </div>
+      </form>
+    </div>
+
+
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+     
+    <script>
+      /**
+       * On document load, assign click handlers to each button and try to load the
+       * user's origin and destination language preferences if previously set.
+       */
+      $(function() {
+        // bind actions
+        $('#load-organism').click(loadOrganism);
+        $('#insert-reference').click(insertReference);
+        
+        google.script.run.withSuccessHandler(loadPreferences)
+            .withFailureHandler(showError).getPreferences();
+      });
+
+      /**
+       * Callback function that populates the origin and destination selection
+       * boxes with user preferences from the server.
+       *
+       * @param {Object} languagePrefs The saved origin and destination languages.
+       */
+      function loadPreferences(prefs) {
+          $('#org-select').val(prefs.organism);
+      }
+      
+    function loadOrganism() {
+        this.disabled = true;
+        $('#error').remove();
+        $("#feat-select").children().remove();
+        var organism = $('#org-select').val();
+        google.script.run
+            .withSuccessHandler(
+              function(features, element) {
+              $("#feat-parent").removeClass('hidden');
+              var featSel = $("#feat-select");
+                for(var i = 0; i < features.length; i++){ 
+                  var option = $('<option></option>')
+                    .attr("value", features[i].id)
+                    .attr("data-name", features[i].name)
+                    .text(features[i].loc + " " + features[i].name);
+                  featSel.append(option);                   
+                }
+                element.disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showError(msg, $('#button-bar'));
+                element.disabled = false;
+              })
+            .withUserObject(this)
+            .getOrganismFeatures(organism);
+      }
+
+      /**
+       * Runs a server-side function to insert the translated text into the document
+       * at the user's cursor or selection.
+       */
+      function insertReference() {
+        this.disabled = true;
+        $('#error').remove();
+        
+        google.script.run
+            .withSuccessHandler(
+              function(returnSuccess, element) {
+                element.disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showError(msg, $('#button-bar'));
+                element.disabled = false;
+              })
+            .withUserObject(this)
+            .insertFeatureReference(
+                $('#org-select').val(), 
+                $("#feat-select").val(),
+                $('#feat-select option:selected').attr("data-name")
+            );
+      }
+
+      /**
+       * Inserts a div that contains an error message after a given element.
+       *
+       * @param msg The error message to display.
+       * @param element The element after which to display the error.
+       */
+      function showError(msg, element) {
+        var div = $('<div id="error" class="error">' + msg + '</div>');
+        $(element).after(div);
+      }
+    </script>
+  </body>
+</html>
