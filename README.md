@@ -14,3 +14,8 @@ This is very much WIP and an experiment.
 ## LICENSE
 
 AGPL-3.0
+
+
+## Support
+
+This material is based upon work supported by the National Science Foundation under Grant Number (Award 1565146)
